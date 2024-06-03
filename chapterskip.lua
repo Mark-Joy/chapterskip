@@ -5,14 +5,16 @@
 -- This script skips chapters based on their title.
 
 local categories = {
-    prologue = "^Prologue/^Intro",
-    opening = "^OP/ OP$/^Opening",
-    ending = "^ED/ ED$/^Ending",
-    preview = "Preview$"
+    prologue = "^[Pp]rologue/^[Ii]ntro",
+    opening = "^OP/ OP$/^[Oo]pening/[Oo]pening$",
+    ending = "^ED/ ED$/^[Ee]nding/[Ee]nding$",
+    credits = "^[Cc]redits/[Cc]redits$",
+    preview = "[Pp]review$"
 }
 
 local options = {
-    enabled = true,
+    enabled = false,
+    ignore_case=true,
     skip_once = true,
     categories = "",
     skip = ""
@@ -26,6 +28,7 @@ function matches(i, title)
             if string.find(category:lower(), "^idx%-") == nil then
                 if title then
                     for pattern in string.gmatch(categories[category:lower()], "([^/]+)") do
+                        if options.ignore_case then title = title:lower(); pattern = pattern:lower() end
                         if string.match(title, pattern) then
                             return true
                         end
@@ -44,6 +47,10 @@ end
 
 local skipped = {}
 local parsed = {}
+
+local function toggle_chapterskip()
+    options.enabled = not options.enabled
+end
 
 function chapterskip(_, current)
     mp.options.read_options(options, "chapterskip")
@@ -82,4 +89,5 @@ function chapterskip(_, current)
 end
 
 mp.observe_property("chapter", "number", chapterskip)
-mp.register_event("file-loaded", function() skipped = {} end)
+mp.register_event('start-file', function() skipped = {} end)
+mp.add_key_binding(nil, 'toggle-chapterskip', toggle_chapterskip)
